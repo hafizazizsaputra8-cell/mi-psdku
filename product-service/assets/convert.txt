@@ -1,0 +1,3 @@
+$b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("product_service\assets\gambar.jpg"))
+Set-Content -LiteralPath ".\product_service\assets\gambar2.jpg.b64" -Value $b64 -Encoding ascii -NoNewline
+(Get-Item "product_service\assets\gambar1.jpg.b64").Length
