@@ -1,0 +1,36 @@
+services:
+  cart-service:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=cart-db
+      - DB_PORT=5432
+      - DB_DATABASE=cartdb
+      - DB_USERNAME=appuser
+      - DB_PASSWORD=apppassword
+      - LOG_CHANNEL=stderr
+    command: php artisan serve --host=0.0.0.0 --port=3001
+    depends_on:
+      cart-db:
+        condition: service_healthy
+
+  cart-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=cartdb
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - cart-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d cartdb"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+volumes:
+  cart-db-data:
