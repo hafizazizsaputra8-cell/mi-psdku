@@ -37,6 +37,14 @@ class Order extends Model
     }
 
     /**
+     * Prepare a date for array / JSON serialization in ISO-8601 with timezone.
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d\TH:i:sP');
+    }
+
+    /**
      * Relationship: An order has many order items.
      */
     public function items(): HasMany

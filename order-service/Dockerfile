@@ -15,4 +15,4 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
 EXPOSE 3003
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=3003"]
+CMD ["sh", "-c", "until php artisan migrate --force; do echo 'Menunggu database order-db siap...'; sleep 2; done; php artisan serve --host=0.0.0.0 --port=3003"]

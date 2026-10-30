@@ -48,9 +48,6 @@ class CartController extends Controller
         } catch (Throwable $e) {
             return $this->errorResponse($e, 'menambahkan item');
         }
-        catch (Throwable $e) {
-            return $this->errorResponse($e, 'menambahkan item');
-        }
     }
 
     public function update(UpdateCartItemRequest $request, int $id): JsonResponse

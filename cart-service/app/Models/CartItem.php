@@ -14,4 +14,9 @@ class CartItem extends Model
     {
         return $query->where('user_id', $userId)->latest();
     }
+
+    public function scopeForUser(Builder $query, $userId)
+    {
+        return $query->where('user_id', $userId)->latest();
+    }
 }

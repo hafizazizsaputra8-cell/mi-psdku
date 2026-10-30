@@ -511,5 +511,6 @@ Pengembangan dilakukan secara bertahap dengan riwayat commit yang jelas dalam Ba
 12. `docs(api): sediakan berkas HTTP request untuk seluruh skenario pengujian dan demo`
 13. `docs: buat dokumentasi README lengkap dengan diagram arsitektur, panduan instalasi, dan demo`
 14. `feat(order-service): daftarkan service provider aplikasi`
+15. `fix: perbaiki konfigurasi startup kontainer, scope model, dan bersihkan file redundan`
 
 > **Catatan Pengumpulan**: Cantumkan SHA commit terakhir saat mengumpulkan via formulir UTS.
