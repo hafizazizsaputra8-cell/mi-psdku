@@ -1,0 +1,239 @@
+### ==============================================================================
+### MICROSERVICES DEMO & TEST REQUESTS
+### UTS Microservices: Membangun Order Service
+### ==============================================================================
+
+@productServiceUrl = http://localhost:3000
+@cartServiceUrl = http://localhost:3001
+@reviewServiceUrl = http://localhost:3002
+@orderServiceUrl = http://localhost:3003
+
+### ------------------------------------------------------------------------------
+### 1. HEALTH CHECKS
+### ------------------------------------------------------------------------------
+
+# @name HealthOrderService
+GET {{orderServiceUrl}}/health
+Accept: application/json
+
+###
+# @name HealthProductService
+GET {{productServiceUrl}}/health
+Accept: application/json
+
+###
+# @name HealthCartService
+GET {{cartServiceUrl}}/health
+Accept: application/json
+
+###
+# @name HealthReviewService
+GET {{reviewServiceUrl}}/health
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 2. PERSIAPAN DATA: SEEDING / VIEWING PRODUCTS
+### ------------------------------------------------------------------------------
+
+# Cek Produk ID 1 (Keyboard Mekanikal, Stok 25)
+GET {{productServiceUrl}}/products/1
+Accept: application/json
+
+###
+# Cek Produk ID 2 (Mouse Wireless, Stok 40)
+GET {{productServiceUrl}}/products/2
+Accept: application/json
+
+###
+# Cek Produk ID 3 (Monitor 24 Inch, Stok 10)
+GET {{productServiceUrl}}/products/3
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 3. PERSIAPAN CART (CART-SERVICE)
+### ------------------------------------------------------------------------------
+
+# Kosongkan keranjang user 7 terlebih dahulu
+DELETE {{cartServiceUrl}}/carts/7
+Accept: application/json
+
+###
+# Tambah Produk ID 1 (Keyboard Mekanikal, Qty 2) ke Keranjang User 7
+POST {{cartServiceUrl}}/carts
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 7,
+  "product_id": 1,
+  "quantity": 2
+}
+
+###
+# Tambah Produk ID 2 (Mouse Wireless, Qty 1) ke Keranjang User 7
+POST {{cartServiceUrl}}/carts
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 7,
+  "product_id": 2,
+  "quantity": 1
+}
+
+###
+# Lihat isi keranjang user 7 (Total 3 items)
+GET {{cartServiceUrl}}/carts/7
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 4. POST /orders (CHECKOUT) - SCENARIOS
+### ------------------------------------------------------------------------------
+
+### Skenario 4.1: POST /orders - Gagal Validasi Body Kosong (422)
+POST {{orderServiceUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+}
+
+### Skenario 4.2: POST /orders - Gagal Keranjang Kosong (409)
+# Menggunakan user_id 999 yang tidak memiliki item keranjang
+POST {{orderServiceUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 999
+}
+
+### Skenario 4.3: POST /orders - Gagal Stok Tidak Cukup (409)
+# Tambahkan 11 monitor ke user 8 (stok hanya 10)
+DELETE {{cartServiceUrl}}/carts/8
+Accept: application/json
+
+###
+POST {{cartServiceUrl}}/carts
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 8,
+  "product_id": 3,
+  "quantity": 11
+}
+
+###
+# Lakukan checkout user 8 (akan gagal 409)
+POST {{orderServiceUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 8
+}
+
+### Skenario 4.4: POST /orders - Sukses Checkout (201)
+# Checkout keranjang user 7 yang berisi 2 Keyboard & 1 Mouse
+POST {{orderServiceUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user_id": 7
+}
+
+### Verifikasi Keranjang user 7 telah kosong setelah checkout
+GET {{cartServiceUrl}}/carts/7
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 5. GET /orders/{id} (DETAIL ORDER) - SCENARIOS
+### ------------------------------------------------------------------------------
+
+### Skenario 5.1: GET /orders/{id} - Sukses (200)
+GET {{orderServiceUrl}}/orders/1
+Accept: application/json
+
+### Skenario 5.2: GET /orders/{id} - Gagal Tidak Ditemukan (404)
+GET {{orderServiceUrl}}/orders/999
+Accept: application/json
+
+### Skenario 5.3: GET /orders/{id} - Gagal ID Bukan Angka (404)
+GET {{orderServiceUrl}}/orders/abc
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 6. GET /orders/user/{userId} (DAFTAR PESANAN USER) - SCENARIOS
+### ------------------------------------------------------------------------------
+
+### Skenario 6.1: GET /orders/user/{userId} - Sukses Semua Status (200)
+GET {{orderServiceUrl}}/orders/user/7
+Accept: application/json
+
+### Skenario 6.2: GET /orders/user/{userId} - Sukses Filter PENDING (200)
+GET {{orderServiceUrl}}/orders/user/7?status=PENDING
+Accept: application/json
+
+### Skenario 6.3: GET /orders/user/{userId} - Gagal Nilai Status Tidak Valid (422)
+GET {{orderServiceUrl}}/orders/user/7?status=SHIPPED
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 7. PATCH /orders/{id}/pay (SIMULASI BAYAR) - SCENARIOS
+### ------------------------------------------------------------------------------
+
+### Skenario 7.1: PATCH /orders/{id}/pay - Sukses Bayar PENDING -> PAID (200)
+PATCH {{orderServiceUrl}}/orders/1/pay
+Accept: application/json
+
+### Skenario 7.2: PATCH /orders/{id}/pay - Gagal Sudah Berstatus PAID (409)
+PATCH {{orderServiceUrl}}/orders/1/pay
+Accept: application/json
+
+### Skenario 7.3: PATCH /orders/{id}/pay - Gagal Pesanan Tidak Ditemukan (404)
+PATCH {{orderServiceUrl}}/orders/999/pay
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 8. PENGUJIAN SNAPSHOT HARGA
+### ------------------------------------------------------------------------------
+
+# 1. Cek harga pesanan order ID 1 (misal unit_price 450000)
+GET {{orderServiceUrl}}/orders/1
+Accept: application/json
+
+# 2. Ubah harga produk ID 1 di product-service (misal naik jadi 600000)
+PUT {{productServiceUrl}}/products/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Keyboard Mekanikal",
+  "price": 600000,
+  "stock": 25,
+  "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+}
+
+# 3. Buktikan bahwa data di order ID 1 TIDAK BERUBAH (tetap unit_price 450000)
+GET {{orderServiceUrl}}/orders/1
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 9. PENGUJIAN KEGAGALAN SERVICE EKSTERNAL (503)
+### ------------------------------------------------------------------------------
+# Untuk menguji 503:
+# Jalankan di terminal: docker stop product-service
+# Lalu kirim request POST /orders untuk user baru dengan item keranjang:
+# POST {{orderServiceUrl}}/orders  -> Akan merespons 503 "Product service tidak dapat dihubungi, coba lagi nanti"
+# Cek log: docker compose logs order-service
+# Nyalakan kembali: docker start product-service
